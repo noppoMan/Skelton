@@ -1,0 +1,51 @@
+{
+  "DVTSourceControlWorkspaceBlueprintPrimaryRemoteRepositoryKey" : "C8BCB70E5BA9B013E246CB2F9844FEB774381333",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyRepositoryLocationsKey" : {
+
+  },
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyStatesKey" : {
+    "1E341D92E29B00380C7F10E3866962C9D13CE7F8" : 0,
+    "C8BCB70E5BA9B013E246CB2F9844FEB774381333" : 0,
+    "3F46238ADAD11DA3B7DDDBB74DD15566970E7D15" : 0,
+    "D4199CF4A45E212E54A4CEE7E34326E0BC446862" : 0,
+    "57932305D7AF3390B1D4C8A3D4D1FCFFE771843F" : 0
+  },
+  "DVTSourceControlWorkspaceBlueprintIdentifierKey" : "3E014D05-A2CE-4AD1-B0E8-D0F35F8037D5",
+  "DVTSourceControlWorkspaceBlueprintWorkingCopyPathsKey" : {
+    "1E341D92E29B00380C7F10E3866962C9D13CE7F8" : "SlimaneHTTP\/HTTPParser\/HTTP\/Core\/",
+    "C8BCB70E5BA9B013E246CB2F9844FEB774381333" : "SlimaneHTTP\/",
+    "3F46238ADAD11DA3B7DDDBB74DD15566970E7D15" : "SlimaneHTTP\/Suv\/",
+    "D4199CF4A45E212E54A4CEE7E34326E0BC446862" : "SlimaneHTTP\/HTTPParser\/HTTP\/",
+    "57932305D7AF3390B1D4C8A3D4D1FCFFE771843F" : "SlimaneHTTP\/HTTPParser\/"
+  },
+  "DVTSourceControlWorkspaceBlueprintNameKey" : "SlimaneHTTP",
+  "DVTSourceControlWorkspaceBlueprintVersion" : 204,
+  "DVTSourceControlWorkspaceBlueprintRelativePathToProjectKey" : "Xcode\/SlimaneHTTP.xcodeproj",
+  "DVTSourceControlWorkspaceBlueprintRemoteRepositoriesKey" : [
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/Zewo\/Core",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "1E341D92E29B00380C7F10E3866962C9D13CE7F8"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/noppoMan\/Suv.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "3F46238ADAD11DA3B7DDDBB74DD15566970E7D15"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/Zewo\/HTTPParser.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "57932305D7AF3390B1D4C8A3D4D1FCFFE771843F"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "github.com:noppoMan\/SlimaneHTTP.git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "C8BCB70E5BA9B013E246CB2F9844FEB774381333"
+    },
+    {
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryURLKey" : "https:\/\/github.com\/Zewo\/HTTP",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositorySystemKey" : "com.apple.dt.Xcode.sourcecontrol.Git",
+      "DVTSourceControlWorkspaceBlueprintRemoteRepositoryIdentifierKey" : "D4199CF4A45E212E54A4CEE7E34326E0BC446862"
+    }
+  ]
+}

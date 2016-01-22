@@ -1,0 +1,6 @@
+[submodule "Suv"]
+    path = Suv
+    url = https://github.com/noppoMan/Suv.git
+[submodule "HTTPParser"]
+	path = HTTPParser
+	url = https://github.com/noppoMan/HTTPParser.git

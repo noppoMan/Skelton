@@ -1,0 +1,7 @@
+.DS_Store
+Packages
+.build
+Xcode/SlimaneHTTP.xcworkspace/xcuserdata
+Xcode/SlimaneHTTP.xcodeproj/xcuserdata
+Xcode/SlimaneHTTP.xcodeproj/project.xcworkspace/xcuserdata
+Xcode/build
