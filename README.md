@@ -129,8 +129,18 @@ try! server.listen()
 SlimaneHTTP supports Keep-Alive connection. Default Keep-Alive Timeout sec is 75. 0 is disable keep-alive.  
 You can change keep alive timeout sec to assign unsigned numner to `server.keepAliveTimout` member variable.
 
-```
+```swift
 server.keepAliveTimout = 120 // 2 min
+```
+
+### Nodelay(Nagle’s algorithm.)
+
+```swift
+let server = SlimaneHTTP.createServer(...)
+
+server.setNoDelay = true // Enable to use Nagle’s algorithm.
+
+server.listen()
 ```
 
 ### Header Field
