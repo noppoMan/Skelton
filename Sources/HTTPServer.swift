@@ -6,6 +6,12 @@
 //  Copyright © 2016 MikeTOKYO. All rights reserved.
 //
 
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin.C
+#endif
+
 import HTTP
 import HTTPParser
 import Suv
@@ -150,16 +156,16 @@ public class HTTPServer {
         }
     
         let parser = RequestParser { [unowned self] request in
-            if self.keepAliveTimeout > 0 {
-                do {
-                    if self.server.socket.typeIsTcp {
-                        try (self.server.socket as! TCP).setKeepAlive(true, delay: self.keepAliveTimeout)
-                    }
-                } catch {
-                    print(error)
-                    return client.close()
-                }
-            }
+//            if self.keepAliveTimeout > 0 {
+//                do {
+//                    if self.server.socket.typeIsTcp {
+//                        try (self.server.socket as! TCP).setKeepAlive(true, delay: self.keepAliveTimeout)
+//                    }
+//                } catch {
+//                    debug(error)
+//                    return client.close()
+//                }
+//            }
             
             let req = HTTPRequest(request)
 

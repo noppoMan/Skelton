@@ -1,12 +1,4 @@
 //
-//  test_support.swift
-//  SlimaneHTTP
-//
-//  Created by Yuki Takei on 2/16/16.
-//  Copyright © 2016 MikeTOKYO. All rights reserved.
-//
-
-//
 //  support.swift
 //  Suv
 //
@@ -15,51 +7,55 @@
 //
 
 import XCTest
+import Foundation
 
-internal typealias SeriesCB = ((ErrorType?) -> ()) -> ()
-
-
-extension XCTestCase {
-    func waitUntil(timeout: NSTimeInterval = 1, description: String, callback: (() -> ()) -> ()){
-        let expectation = expectationWithDescription("readFile")
+private class AsynchronousTestSupporter {
+    
+    init(timeout: NSTimeInterval, description: String, callback: (() -> ()) -> ()){
+        print("Starting the \(description) test")
+        
+        var breakFlag = false
         
         let done = {
-            expectation.fulfill()
+            breakFlag = true
         }
         
         callback(done)
         
-        waitForExpectationsWithTimeout(timeout) { error in
-            if let error = error {
-                print("Error: \(error.localizedDescription)")
+        let runLoop = NSRunLoop.currentRunLoop()
+        let timeoutDate = NSDate(timeIntervalSinceNow: timeout)
+        
+        while NSDate().compare(timeoutDate) == NSComparisonResult.OrderedAscending {
+            if(breakFlag) {
+                break
             }
+            runLoop.runUntilDate(NSDate(timeIntervalSinceNow: 0.01))
+        }
+        
+        if(!breakFlag) {
+            XCTFail("Test is timed out")
         }
     }
 }
 
-internal func seriesTask(tasks: [SeriesCB], _ completion: (ErrorType?) -> Void) {
-    if tasks.count == 0 {
-        completion(nil)
-        return
-    }
-    
-    var index = 0
-    
-    func _series(current: SeriesCB?) {
-        if let cur = current {
-            cur { err in
-                if err != nil {
-                    return completion(err)
-                }
-                index += 1
-                let next: SeriesCB? = index < tasks.count ? tasks[index] : nil
-                _series(next)
-            }
-        } else {
-            completion(nil)
-        }
-    }
-    
-    _series(tasks[index])
-}
 
+extension XCTestCase {
+    func waitUntil(timeout: NSTimeInterval = 1, description: String, callback: (() -> ()) -> ()){
+        let _ = AsynchronousTestSupporter(timeout: timeout, description: description, callback: callback)
+        
+        // Should restore if the https://github.com/apple/swift-corelibs-xctest/pull/43 is merged
+        //        let expectation = expectationWithDescription("readFile")
+        //
+        //        let done = {
+        //            expectation.fulfill()
+        //        }
+        //
+        //        callback(done)
+        //
+        //        waitForExpectationsWithTimeout(timeout) { error in
+        //            if let error = error {
+        //                print("Error: \(error.localizedDescription)")
+        //            }
+        //        }
+    }
+}
