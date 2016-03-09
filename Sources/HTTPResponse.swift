@@ -21,6 +21,7 @@ public class HTTPResponse {
     */
     public var context: [String: Any] = [:]
     
+    
     private let shouldCloseConnection: Bool
     
     /**
@@ -65,7 +66,7 @@ public class HTTPResponse {
         self.parser = ResponseParser(
             headerCompletion: onHeaderCompletion,
             onBody: onBody,
-            messageCompletion: { response in
+            messageCompletion: { [unowned self] response in
                 if let cb = self.afterWriteCallback {
                     cb(response)
                 }
