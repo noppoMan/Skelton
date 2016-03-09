@@ -51,6 +51,12 @@ extension HTTP.Response {
    }
 }
 
+private func closeAndDestroyHandle<T: Handle>(handle: UnsafeMutablePointer<T>){
+    handle.memory.close()
+    handle.destroy()
+    handle.dealloc(1)
+}
+
 public class HTTPServer {
 
     /**
@@ -64,9 +70,9 @@ public class HTTPServer {
     public var backlog: UInt = 1024
 
     /**
-    Seconds for keep alive timeout, if zero keep alive is disabled. Default is 75 (Same as Nginx)
+    Seconds for keep alive timeout, if zero keep alive is disabled. Default is 15 (Same as Nginx)
     */
-    public var keepAliveTimeout: UInt = 75
+    public var keepAliveTimeout: UInt = 15
 
     /**
     Sets the maximum number of requests that can be served through one keep-alive connection. After the maximum number of requests are made, the connection is closed.
@@ -140,14 +146,15 @@ public class HTTPServer {
     }
 
     private func onConnection(queue: Pipe?) {
-        let client = TCP(loop: loop)
+        let client = UnsafeMutablePointer<TCP>.alloc(1)
+        client.initialize(TCP(loop: loop))
         
         // accept connection
         do {
-            try server.accept(client, queue: queue)
+            try server.accept(client.memory, queue: queue)
         }  catch {
             self.userOnConnection(.Error(error))
-            client.close()
+            closeAndDestroyHandle(client)
         }
         
         // send handle to worker via ipc socket
@@ -163,56 +170,59 @@ public class HTTPServer {
 //                    }
 //                } catch {
 //                    debug(error)
-//                    return client.close()
+//                    return client.memory.close()
 //                }
 //            }
             
-            let req = HTTPRequest(request)
-
+            var req: HTTPRequest? = HTTPRequest(request)
+            var res: HTTPResponse? = nil
+            
             let onHeaderCompletion = { (response: HTTP.Response) -> () in
                 if response.shouldChunkedRespond {
-                    client.write(response.headerDescription.bytes) { _ in
-                        client.unref()
+                    client.memory.write(response.headerDescription.bytes) { _ in
+                        client.memory.unref()
                     }
                 }
             }
 
             let onBody = { (bytes: [Int8]) -> () in
-                client.write(HTTPResponse.encodeAsStreamChunk(bytes)) { _ in
-                    client.unref()
+                client.memory.write(HTTPResponse.encodeAsStreamChunk(bytes)) { _ in
+                    client.memory.unref()
                 }
             }
 
-            let completionHandler = { [unowned self] (response: HTTP.Response?) -> () in
+            let completionHandler = { (response: HTTP.Response?) -> () in
+                req = nil
+                res = nil
                 if self.keepAliveTimeout == 0 || !request.keepAlive {
-                    return client.close()
+                    return closeAndDestroyHandle(client)
                 }
-                client.unref()
+                client.memory.unref()
             }
 
             let onMessageComplete = { (response: HTTP.Response) -> () in
                 let bodyBytes = response.shouldChunkedRespond ? "\(0)\(CRLF)\(CRLF)".bytes : response.byteDescription
-                client.write(bodyBytes) { _ in
+                client.memory.write(bodyBytes) { _ in
                     completionHandler(response)
                 }
             }
 
-            let onParseFailed = { [unowned self] (error: ErrorType, streaming: Bool) -> () in
+            let onParseFailed = { (error: ErrorType, streaming: Bool) -> () in
                 debug(error)
                 if streaming {
-                    return client.write("\(0)\(CRLF)\(CRLF)".bytes) { _ in
-                        client.unref()
+                    return client.memory.write("\(0)\(CRLF)\(CRLF)".bytes) { _ in
+                        client.memory.unref()
                     }
                 }
 
                 let response = self.errorResponse(.InternalServerError)
-                client.write(response.description.bytes) { _ in
+                client.memory.write(response.description.bytes) { _ in
                     completionHandler(nil)
                 }
             }
 
-            let res = HTTPResponse(
-                req,
+            res = HTTPResponse(
+                req!,
                 shouldCloseConnection: self.keepAliveTimeout == 0,
                 onHeaderCompletion: onHeaderCompletion,
                 onBody: onBody,
@@ -220,24 +230,24 @@ public class HTTPServer {
                 onParseFailed: onParseFailed
             )
 
-            self.userOnConnection(.Success(req, res))
+            self.userOnConnection(.Success(req!, res!))
         }
 
-        client.read { [unowned client] result in
+        client.memory.read { [unowned self] result in
             if case let .Data(buf) = result {
                 do {
                     let data: [Int8] = buf.bytes.map{ Int8(bitPattern: $0) }
                     try parser.parse(data)
                 } catch {
                     self.userOnConnection(.Error(error))
-                    client.close()
+                    closeAndDestroyHandle(client)
                 }
             } else if case .Error(let error) = result {
                 self.userOnConnection(.Error(error))
-                client.close()
+                closeAndDestroyHandle(client)
             } else {
                 // EOF
-                client.close()
+                closeAndDestroyHandle(client)
             }
         }
     }
@@ -247,12 +257,12 @@ public class HTTPServer {
     }
     
     // sending handles over a pipe
-    private func sendHandleToWorker(client: TCP){
+    private func sendHandleToWorker(client: UnsafeMutablePointer<TCP>){
         let worker = Cluster.workers[self.roundRobinCounter]
 
         // send stream to worker with ipc
-        client.write2(worker.ipcPipe!)
-        client.close() // not immediately
+        client.memory.write2(worker.ipcPipe!)
+        closeAndDestroyHandle(client)
 
         roundRobinCounter = (roundRobinCounter + 1) % Cluster.workers.count
     }
