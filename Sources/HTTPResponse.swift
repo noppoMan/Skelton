@@ -18,7 +18,7 @@ let CRLF = "\r\n"
 public class HTTPResponse {
     /**
      context for keeping values that are used in high layer application.
-    */
+     */
     public var context: [String: Any] = [:]
     
     
@@ -26,44 +26,48 @@ public class HTTPResponse {
     
     /**
      Checking for either header is already sent or not
-    */
+     */
     public private(set) var headerIsAlreadySent = false
     
-    var parser: ResponseParser = ResponseParser { _ in }
-
-    var request: HTTPRequest
-
-    var status = Status.OK
-
-    var _headers: [String: String] = [:]
+    private var _parser: ResponseParser? = nil
+    
+    private var parser: ResponseParser {
+        return _parser!
+    }
+    
+    private var request: HTTPRequest
+    
+    private var status = Status.OK
+    
+    private var _headers: [String: String] = [:]
     
     private(set) var beforeWriteCallback: (() -> ())? = nil
     
     private(set) var afterWriteCallback: (Response? -> ())? = nil
-
+    
     private var onParseFailed: (ErrorType, Bool) -> Void = { err, _ in print(err) }
     
     /**
-      -parameter request: HTTPRequest
-      -parameter shouldCloseConnection: If true server will shoutdown connection even though request header has Connection: Keep-Alive
-      -parameter onHeaderCompletion: Handler for http header parsing completion
-      -parameter onBody: HTTPRequest Handler for each body callback this is able to use when transfer-encoding is enabled
-      -parameter onMessageComplete: Handler for http message parsing completion
-      -parameter onParseFailed: Handler for http parsing error
+     -parameter request: HTTPRequest
+     -parameter shouldCloseConnection: If true server will shoutdown connection even though request header has Connection: Keep-Alive
+     -parameter onHeaderCompletion: Handler for http header parsing completion
+     -parameter onBody: HTTPRequest Handler for each body callback this is able to use when transfer-encoding is enabled
+     -parameter onMessageComplete: Handler for http message parsing completion
+     -parameter onParseFailed: Handler for http parsing error
      */
-    public init(_ request: HTTPRequest,
-           shouldCloseConnection: Bool,
-           onHeaderCompletion: Response -> Void = {_ in},
-           onBody: [Int8] -> Void = {_ in},
-           onMessageComplete: Response -> Void = {_ in},
-           onParseFailed: (ErrorType, Bool) -> Void = { err, _ in print(err) }
-        ){
+    public init(request: inout HTTPRequest,
+        shouldCloseConnection: Bool,
+        onHeaderCompletion: Response -> Void = {_ in},
+        onBody: [Int8] -> Void = {_ in},
+        onMessageComplete: Response -> Void = {_ in},
+        onParseFailed: (ErrorType, Bool) -> Void = { err, _ in print(err) }
+    ){
         self.shouldCloseConnection = shouldCloseConnection
         self.request = request
         
         self.onParseFailed = onParseFailed
         
-        self.parser = ResponseParser(
+        self._parser = ResponseParser(
             headerCompletion: onHeaderCompletion,
             onBody: onBody,
             messageCompletion: { [unowned self] response in
@@ -77,7 +81,7 @@ public class HTTPResponse {
     
     /**
      Calback for bwfore writing response
-    */
+     */
     public func beforeWrite(callback: () -> ()){
         self.beforeWriteCallback = callback
     }
@@ -94,21 +98,21 @@ extension HTTPResponse {
     
     /**
      Returns all headers
-    */
+     */
     public var headers: [String: String] {
         return _headers
     }
     
     /**
      Returns header value for key
-    */
+     */
     public func getHeader(header: String) -> String? {
         for (key, value) in headers where key.lowercaseString == header.lowercaseString {
             return value
         }
         return nil
     }
-
+    
     /**
      For setting http header field
      */
@@ -118,7 +122,7 @@ extension HTTPResponse {
     
     /**
      For settig http status
-    */
+     */
     public func status(status: Status) -> HTTPResponse {
         self.status = status
         return self
@@ -126,7 +130,7 @@ extension HTTPResponse {
     
     /**
      Returns true if `Transfer-Encoding: Chunked`
-    */
+     */
     public var shouldChunkedRespond: Bool {
         return getHeader("transfer-encoding")?.lowercaseString == "chunked"
     }
@@ -136,7 +140,7 @@ extension HTTPResponse {
     
     /**
      String header description
-    */
+     */
     public var headerDescription: String {
         let headerDescription = headers.map { k, v in return "\(k): \(v)" }.joinWithSeparator(CRLF)
         return "HTTP/1.1 \(String(status.statusCode)) \(status.reasonPhrase)\(CRLF)\(headerDescription)\(CRLF)\(CRLF)"
@@ -236,7 +240,7 @@ extension HTTPResponse {
         if let beforeWrite = self.beforeWriteCallback {
             beforeWrite()
         }
-    
+        
         do {
             try parser.parse(headerDescription.bytes)
         } catch {
