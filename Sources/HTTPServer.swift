@@ -51,12 +51,6 @@ extension HTTP.Response {
     }
 }
 
-private func closeAndDestroyHandle<T: Handle>(handle: UnsafeMutablePointer<T>){
-    handle.memory.close()
-    handle.destroy()
-    handle.dealloc(1)
-}
-
 public class HTTPServer {
     
     /**
@@ -91,6 +85,8 @@ public class HTTPServer {
     
     private let server: TCPServer
     
+    private var establishedClients = [UnsafeMutablePointer<TCP>]()
+    
     /**
      - parameter loop: Event loop
      - parameter ipcEnable: if true TCP is initilized as ipcMode and it can't bind, false it is initialized as basic TCP handle instance
@@ -103,6 +99,32 @@ public class HTTPServer {
         
         // Ignore SIGPIPE
         signal(SIGPIPE, SIG_IGN)
+        
+        // connection GC
+        let t = Timer(loop: loop, mode: .Interval, tick: 1000)
+        t.start { [unowned self] in
+            t.stop()
+            debug("Pooled connections: \(self.establishedClients.count)")
+            
+            func conGC(client: UnsafeMutablePointer<TCP>, index: inout Int) -> Int {
+                // TODO need to manage socket state
+                if !client.memory.typeIsTcp || client.memory.isClosing() {
+                    self.establishedClients.removeAtIndex(index)
+                    index-=1
+                    client.destroy()
+                    client.dealloc(1)
+                }
+                index+=1
+                return self.establishedClients.count > index ? conGC(self.establishedClients[index], index: &index) : index
+            }
+            
+            if self.establishedClients.count > 0 {
+                var index = 0
+                conGC(self.establishedClients[index], index: &index)
+            }
+            
+            t.resume()
+        }
     }
     
     /**
@@ -150,12 +172,19 @@ public class HTTPServer {
         let client = UnsafeMutablePointer<TCP>.alloc(1)
         client.initialize((TCP(loop: loop)))
         
-        // accept connection
+        self.establishedClients.append(client)
+        
         do {
+            // accept connection
             try server.accept(client.memory, queue: queue)
+            
+            // keep alive
+            if self.keepAliveTimeout > 0 {
+                try client.memory.setKeepAlive(true, delay: self.keepAliveTimeout)
+            }
         }  catch {
             self.userOnConnection(.Error(error))
-            closeAndDestroyHandle(client)
+            client.memory.close()
         }
         
         // send handle to worker via ipc socket
@@ -163,22 +192,15 @@ public class HTTPServer {
             return sendHandleToWorker(client)
         }
         
-        let parser = RequestParser { request in
-            if self.keepAliveTimeout > 0 {
-                do {
-                    if self.server.socket.typeIsTcp {
-                        try client.memory.setKeepAlive(true, delay: self.keepAliveTimeout)
-                    }
-                } catch {
-                    debug(error)
-                    return client.memory.close()
-                }
-            }
-            
+        let parser = RequestParser { [unowned self] request in
             var req: HTTPRequest? = HTTPRequest(request)
             var res: HTTPResponse? = nil
             
             let onHeaderCompletion = { (response: HTTP.Response) -> () in
+                if !client.memory.typeIsTcp {
+                    return
+                }
+                
                 if response.shouldChunkedRespond {
                     client.memory.write(response.headerDescription.bytes) { _ in
                         client.memory.unref()
@@ -198,13 +220,19 @@ public class HTTPServer {
                     res = nil
                 }
                 if self.keepAliveTimeout == 0 || !request.keepAlive {
-                    return closeAndDestroyHandle(client)
+                    return client.memory.close()
                 }
+                
                 client.memory.unref()
             }
             
             let onMessageComplete = { (response: HTTP.Response) -> () in
                 let bodyBytes = response.shouldChunkedRespond ? "\(0)\(CRLF)\(CRLF)".bytes : response.byteDescription
+                
+                if !client.memory.typeIsTcp {
+                    return
+                }
+                
                 client.memory.write(bodyBytes) { _ in
                     completionHandler(response)
                 }
@@ -243,14 +271,14 @@ public class HTTPServer {
                     try parser.parse(data)
                 } catch {
                     self.userOnConnection(.Error(error))
-                    closeAndDestroyHandle(client)
+                    client.memory.close()
                 }
             } else if case .Error(let error) = result {
                 self.userOnConnection(.Error(error))
-                closeAndDestroyHandle(client)
+                client.memory.close()
             } else {
                 // EOF
-                closeAndDestroyHandle(client)
+                client.memory.close()
             }
         }
     }
@@ -265,7 +293,7 @@ public class HTTPServer {
         
         // send stream to worker with ipc
         client.memory.write2(worker.ipcPipe!)
-        closeAndDestroyHandle(client)
+        client.memory.close()
         
         roundRobinCounter = (roundRobinCounter + 1) % Cluster.workers.count
     }

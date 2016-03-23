@@ -7,7 +7,12 @@
 //
 
 func debug<T>(val: T){
-    print(val)
+    if let debugMode = Process.env["SLIMANE_HTTP_DEBUG"] {
+        if debugMode == "" {
+            return
+        }
+        print(val)
+    }
 }
 
 extension String {
