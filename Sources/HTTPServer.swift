@@ -101,7 +101,7 @@ public class HTTPServer {
         signal(SIGPIPE, SIG_IGN)
         
         // connection GC
-        let t = Timer(loop: loop, mode: .Interval, tick: 1000)
+        let t = Timer(loop: loop, mode: .Interval, tick: 5000)
         t.start { [unowned self] in
             t.stop()
             debug("Pooled connections: \(self.establishedClients.count)")
@@ -118,10 +118,10 @@ public class HTTPServer {
                 return self.establishedClients.count > index ? conGC(self.establishedClients[index], index: &index) : index
             }
             
-            if self.establishedClients.count > 0 {
-                var index = 0
-                conGC(self.establishedClients[index], index: &index)
-            }
+            if self.establishedClients.isEmpty { return }
+            
+            var index = 0
+            conGC(self.establishedClients[index], index: &index)
             
             t.resume()
         }
