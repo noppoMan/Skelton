@@ -59,7 +59,7 @@ public class HTTPClient {
      Returns true is the socket is stil active
     */
     public var socketIsActive: Bool {
-        return self.state != .Closing && self.state != .Closed
+        return self.socket.typeIsTcp && !self.socket.isClosing()
     }
     
     /**
@@ -127,7 +127,7 @@ public class HTTPClient {
         
         self.state = .Connecting
         
-        self.socket.connect(host: host, port: self.port) { result in
+        self.socket.connect(host: host, port: self.port) { [unowned self] result in
             self.state = .Connected
             
             if case .Error(let err) = result {

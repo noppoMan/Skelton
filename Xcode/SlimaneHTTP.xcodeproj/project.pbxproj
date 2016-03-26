@@ -35,20 +35,6 @@
 			remoteGlobalIDString = B6AC8C0F1C74D24A00FE9B6C;
 			remoteInfo = SlimaneHTTP;
 		};
-		B6AC8C591C74D48400FE9B6C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B6AC8C531C74D48400FE9B6C /* HTTPParser.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = B024A8491C2F2F4D00FBB44A;
-			remoteInfo = HTTPParser;
-		};
-		B6AC8C5B1C74D48400FE9B6C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = B6AC8C531C74D48400FE9B6C /* HTTPParser.xcodeproj */;
-			proxyType = 2;
-			remoteGlobalIDString = B024A8531C2F2F4D00FBB44A;
-			remoteInfo = HTTPParserTests;
-		};
 		B6AC8C741C74D52A00FE9B6C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = B6AC8C6F1C74D52A00FE9B6C /* Suv.xcodeproj */;
@@ -68,13 +54,13 @@
 /* Begin PBXFileReference section */
 		B670F9561C7867ED00C64F7F /* support.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = support.swift; sourceTree = "<group>"; };
 		B67FCD0C1C766D08003C7C17 /* HTTPClientTests.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTTPClientTests.swift; sourceTree = "<group>"; };
+		B68A233C1CA6B37700D75386 /* HTTPParser.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = HTTPParser.xcodeproj; path = ../HTTPParser/Xcode/HTTPParser.xcodeproj; sourceTree = "<group>"; };
 		B6AC8C101C74D24A00FE9B6C /* SlimaneHTTP.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = SlimaneHTTP.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6AC8C131C74D24A00FE9B6C /* SlimaneHTTP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SlimaneHTTP.h; sourceTree = "<group>"; };
 		B6AC8C151C74D24A00FE9B6C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		B6AC8C1A1C74D24A00FE9B6C /* SlimaneHTTPTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SlimaneHTTPTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		B6AC8C1F1C74D24A00FE9B6C /* SlimaneHTTPTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlimaneHTTPTests.swift; sourceTree = "<group>"; };
 		B6AC8C211C74D24A00FE9B6C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		B6AC8C531C74D48400FE9B6C /* HTTPParser.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = HTTPParser.xcodeproj; path = ../HTTPParser/Xcode/HTTPParser.xcodeproj; sourceTree = "<group>"; };
 		B6AC8C651C74D4AB00FE9B6C /* HTTPClient.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTTPClient.swift; sourceTree = "<group>"; };
 		B6AC8C661C74D4AB00FE9B6C /* HTTPRequest.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTTPRequest.swift; sourceTree = "<group>"; };
 		B6AC8C671C74D4AB00FE9B6C /* HTTPResponse.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HTTPResponse.swift; sourceTree = "<group>"; };
@@ -104,11 +90,16 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		B68A233D1CA6B37700D75386 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
 		B6AC8C061C74D24A00FE9B6C = {
 			isa = PBXGroup;
 			children = (
+				B68A233C1CA6B37700D75386 /* HTTPParser.xcodeproj */,
 				B6AC8C6F1C74D52A00FE9B6C /* Suv.xcodeproj */,
-				B6AC8C531C74D48400FE9B6C /* HTTPParser.xcodeproj */,
 				B6AC8C2A1C74D25700FE9B6C /* Sources */,
 				B6B84CE71C75FDB0002DD8B4 /* Tests */,
 				B6AC8C121C74D24A00FE9B6C /* SlimaneHTTP */,
@@ -156,15 +147,6 @@
 			);
 			name = Sources;
 			path = ../Sources;
-			sourceTree = "<group>";
-		};
-		B6AC8C541C74D48400FE9B6C /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				B6AC8C5A1C74D48400FE9B6C /* HTTPParser.framework */,
-				B6AC8C5C1C74D48400FE9B6C /* HTTPParserTests.xctest */,
-			);
-			name = Products;
 			sourceTree = "<group>";
 		};
 		B6AC8C701C74D52A00FE9B6C /* Products */ = {
@@ -267,8 +249,8 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = B6AC8C541C74D48400FE9B6C /* Products */;
-					ProjectRef = B6AC8C531C74D48400FE9B6C /* HTTPParser.xcodeproj */;
+					ProductGroup = B68A233D1CA6B37700D75386 /* Products */;
+					ProjectRef = B68A233C1CA6B37700D75386 /* HTTPParser.xcodeproj */;
 				},
 				{
 					ProductGroup = B6AC8C701C74D52A00FE9B6C /* Products */;
@@ -284,20 +266,6 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		B6AC8C5A1C74D48400FE9B6C /* HTTPParser.framework */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.framework;
-			path = HTTPParser.framework;
-			remoteRef = B6AC8C591C74D48400FE9B6C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
-		B6AC8C5C1C74D48400FE9B6C /* HTTPParserTests.xctest */ = {
-			isa = PBXReferenceProxy;
-			fileType = wrapper.cfbundle;
-			path = HTTPParserTests.xctest;
-			remoteRef = B6AC8C5B1C74D48400FE9B6C /* PBXContainerItemProxy */;
-			sourceTree = BUILT_PRODUCTS_DIR;
-		};
 		B6AC8C751C74D52A00FE9B6C /* Suv.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;

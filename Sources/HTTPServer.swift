@@ -38,7 +38,7 @@ extension HTTP.Response {
         var string = "HTTP/1.1 \(statusCode) \(reasonPhrase)\(CRLF)"
         
         for (header, value) in headers {
-            string += "\(header): \(value)\(CRLF)"
+            string += "\(header.capitalizedString): \(value.capitalizedString)\(CRLF)"
         }
         
         string += "\(CRLF)"
