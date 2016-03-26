@@ -6,6 +6,7 @@
 //  Copyright © 2016 MikeTOKYO. All rights reserved.
 //
 
+import Foundation
 import HTTP
 import HTTPParser
 import Suv
@@ -204,7 +205,7 @@ extension HTTPResponse {
     
     internal static func encodeAsStreamChunk(bytes: [Int8]) -> [Int8] {
         var chunkedBytes = [Int8]()
-        chunkedBytes.appendContentsOf(String(format:"%2X", argList: bytes.count).trim().bytes)
+        chunkedBytes.appendContentsOf(String(NSString(format:"%2X", bytes.count)).trim().bytes)
         chunkedBytes.appendContentsOf(CRLF.bytes)
         chunkedBytes.appendContentsOf(bytes)
         chunkedBytes.appendContentsOf(CRLF.bytes)
@@ -234,8 +235,6 @@ extension HTTPResponse {
         }
         
         setHeader("Date", Time.rfc1123)
-        
-        setHeader("Server", "Slimane")
         
         if let beforeWrite = self.beforeWriteCallback {
             beforeWrite()
