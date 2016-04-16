@@ -1,7 +1,7 @@
 # Skelton
 An asynchronous http server for Swift that adopts open-swift
 
-This is Web Server Layer for [Slimane](https://github.com/noppoMan/slimane.git)
+This is Web Server Layer for [Slimane](https://github.com/slimane-swift/slimane.git)
 
 ## Usage
 
