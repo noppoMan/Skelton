@@ -10,8 +10,8 @@ extension Data {
     public var signedBytes: [Int8] {
         return self.bytes.map { Int8(bitPattern: $0) }
     }
-    
+
     public var bufferd: Buffer {
-        return Buffer(self.bytes)
+        return Buffer(bytes: self.bytes)
     }
 }
