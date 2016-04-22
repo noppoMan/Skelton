@@ -52,7 +52,6 @@ var server = HTTPServer() {
         stream.send(res.description.data) // Write Head
         stream.send(Response.chunkedEncode(string: "aaaa")) // Write body
         stream.end() // Write end
-        stream.unref() // unref counter
     } catch {
         print(error)
     }

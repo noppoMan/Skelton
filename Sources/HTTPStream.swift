@@ -20,7 +20,7 @@ public final class HTTPStream: AsyncStream {
     init(stream: TCP){
         self.stream = stream
     }
-
+    
     public func setKeepAlive(delay: UInt) throws {
         try stream.setKeepAlive(true, delay: delay)
     }
@@ -54,6 +54,9 @@ public final class HTTPStream: AsyncStream {
     }
     
     public func close() -> Bool {
+        if closed {
+            return true
+        }
         stream.close()
         return stream.isClosing()
     }
