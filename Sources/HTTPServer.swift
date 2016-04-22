@@ -37,6 +37,10 @@ public struct HTTPServer {
      */
     public var keepAliveTimeout: UInt = 15
     
+    public var shouldKeepAlive: Bool {
+        return keepAliveTimeout > 0
+    }
+    
     /**
      Sets the maximum number of requests that can be served through one keep-alive connection. After the maximum number of requests are made, the connection is closed.
      */
@@ -110,12 +114,13 @@ public struct HTTPServer {
             try server.accept(client.stream, queue: queue)
             
             // keep alive
-            if self.keepAliveTimeout > 0 {
+            if self.shouldKeepAlive {
                 try client.setKeepAlive(self.keepAliveTimeout)
+                client.unref()
             }
         }  catch {
-            self.userOnConnection { throw error }
             client.close()
+            self.userOnConnection { throw error }
         }
         
         // send handle to worker via ipc socket
@@ -132,7 +137,9 @@ public struct HTTPServer {
                     self.userOnConnection { return (request, client) }
                 }
             } catch {
-                client.close()
+                if !self.shouldKeepAlive {
+                    client.close()
+                }
                 self.userOnConnection { throw error }
             }
         }
