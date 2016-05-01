@@ -17,7 +17,7 @@ let server = HTTPServer { result in
     ])
 
     stream.send("\(res.description)\r\nHello!".data)
-    stream.close()
+    try! stream.close()
 }
 
 try! server.bind(Address(host: "127.0.0.1", port: 8888))
@@ -102,7 +102,7 @@ import PackageDescription
 let package = Package(
     name: "MyApp",
     dependencies: [
-        .Package(url: "https://github.com/noppoMan/Skelton.git", majorVersion: 0, minor: 3),
+        .Package(url: "https://github.com/noppoMan/Skelton.git", majorVersion: 0, minor: 4),
     ]
  )
 ```

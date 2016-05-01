@@ -1,7 +1,6 @@
 import Suv
-import SlimaneHTTPServer
 
-func observeWorker(worker: inout Worker){
+func observeWorker(_ worker: inout Worker){
     worker.send(.Message("message from master"))
 
     worker.on { event in
@@ -55,7 +54,7 @@ if Cluster.isMaster {
             }
 
             if !res.isKeepAlive {
-                stream.close()
+                try! stream.close()
             } else {
                 stream.unref()
             }
