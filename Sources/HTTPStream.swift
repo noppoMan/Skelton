@@ -21,12 +21,12 @@ public final class HTTPStream: AsyncStream {
         self.stream = stream
     }
     
-    public func setKeepAlive(delay: UInt) throws {
+    public func setKeepAlive(_ delay: UInt) throws {
         try stream.setKeepAlive(true, delay: delay)
     }
     
-    public func send(data: Data, timingOut deadline: Double = 0 /* infinit */, result: (Void throws -> Void) -> Void = { _ in}) {
-        stream.write(data.bufferd) { res in
+    public func send(_ data: Data, timingOut deadline: Double = .never, completion result: (Void throws -> Void) -> Void = { _ in}) {
+        stream.write(buffer: data.bufferd) { res in
             result {
                 if case .Error(let error) = res {
                     throw error
@@ -35,7 +35,7 @@ public final class HTTPStream: AsyncStream {
         }
     }
     
-    public func receive(upTo byteCount: Int = 2048 /* ignored */, timingOut deadline: Double = 0 /* infinit */, result: (Void throws -> Data) -> Void) {
+    public func receive(upTo byteCount: Int = 2048 /* ignored */, timingOut deadline: Double = .never, completion result: (Void throws -> Data) -> Void) {
         stream.read { res in
             if case .Data(let buf) = res {
                 result { buf.data }
@@ -50,22 +50,21 @@ public final class HTTPStream: AsyncStream {
     }
     
     public func end(){
-        stream.write("\(0)\(CRLF)\(CRLF)".bytes)
+        stream.write(bytes: "\(0)\(CRLF)\(CRLF)".bytes)
     }
     
-    public func close() -> Bool {
+    public func close() throws {
         if closed {
-            return true
+            throw StreamError.closedStream(data: [])
         }
         stream.close()
-        return stream.isClosing()
     }
     
     public func unref() {
         stream.unref()
     }
     
-    public func flush(timingOut deadline: Double, result: (Void throws -> Void) -> Void = {_ in }) {
+    public func flush(timingOut deadline: Double, completion result: (Void throws -> Void) -> Void = {_ in }) {
         // noop
     }
 }

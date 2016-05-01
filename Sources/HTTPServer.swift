@@ -6,6 +6,12 @@
 //  Copyright © 2016 MikeTOKYO. All rights reserved.
 //
 
+#if os(Linux)
+    import Glibc
+#else
+    import Darwin.C
+#endif
+
 @_exported import Suv
 @_exported import S4
 @_exported import C7
@@ -79,7 +85,7 @@ public struct HTTPServer {
      - parameter addr: Bind Address
      - throws: SuvError.UVError
      */
-    public func bind(addr: Address) throws {
+    public func bind(_ addr: Address) throws {
         try server.bind(addr)
     }
     
@@ -103,7 +109,7 @@ public struct HTTPServer {
         Loop.defaultLoop.run()
     }
     
-    private mutating func onConnection(queue: Pipe?) {
+    private mutating func onConnection(_ queue: Pipe?) {
         // TODO need to fix more ARC friendly
         let client = HTTPStream(stream: TCP())
         
@@ -119,8 +125,12 @@ public struct HTTPServer {
                 client.unref()
             }
         }  catch {
-            client.close()
-            self.userOnConnection { throw error }
+            do {
+                try client.close()
+                self.userOnConnection { throw error }
+            } catch {
+                self.userOnConnection { throw error }
+            }
         }
         
         // send handle to worker via ipc socket
@@ -138,9 +148,13 @@ public struct HTTPServer {
                 }
             } catch {
                 if !self.shouldKeepAlive {
-                    client.close()
+                    do {
+                        try client.close()
+                        self.userOnConnection { throw error }
+                    } catch {
+                        self.userOnConnection { throw error }
+                    }
                 }
-                self.userOnConnection { throw error }
             }
         }
     }
@@ -150,11 +164,11 @@ public struct HTTPServer {
     }
     
     // sending handles over a pipe
-    private mutating func sendHandleToWorker(client: HTTPStream){
+    private mutating func sendHandleToWorker(_ client: HTTPStream){
         let worker = Cluster.workers[self.roundRobinCounter]
         
         // send stream to worker with ipc
-        client.stream.write2(worker.ipcPipe!)
+        client.stream.write2(ipcPipe: worker.ipcPipe!)
         client.stream.close()
         
         roundRobinCounter = (roundRobinCounter + 1) % Cluster.workers.count
