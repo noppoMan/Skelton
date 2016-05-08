@@ -22,6 +22,7 @@ public final class HTTPStream: AsyncStream {
     }
     
     public func setKeepAlive(_ delay: UInt) throws {
+        stream.unref()
         try stream.setKeepAlive(true, delay: delay)
     }
     
@@ -58,10 +59,6 @@ public final class HTTPStream: AsyncStream {
             throw StreamError.closedStream(data: [])
         }
         stream.close()
-    }
-    
-    public func unref() {
-        stream.unref()
     }
     
     public func flush(timingOut deadline: Double, completion result: (Void throws -> Void) -> Void = {_ in }) {

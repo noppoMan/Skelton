@@ -122,7 +122,6 @@ public struct HTTPServer {
             // keep alive
             if self.shouldKeepAlive {
                 try client.setKeepAlive(self.keepAliveTimeout)
-                client.unref()
             }
         }  catch {
             do {
