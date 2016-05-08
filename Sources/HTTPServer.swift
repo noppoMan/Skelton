@@ -26,7 +26,7 @@
  */
 public typealias HTTPConnectionResult = (() throws -> (Request, HTTPStream)) -> ()
 
-public struct HTTPServer {
+public final class HTTPServer {
     
     /**
      Event loop
@@ -63,7 +63,8 @@ public struct HTTPServer {
     
     private let server: TCPServer
     
-    private var establishedClients = [UnsafeMutablePointer<TCP>]()
+    // Current connected clients count.
+    public var clientsConnected: Int = 0
     
     /**
      - parameter loop: Event loop
@@ -92,12 +93,12 @@ public struct HTTPServer {
     /**
      Listen HTTP Server
      */
-    public mutating func listen() throws {
+    public func listen() throws {
         if server.socket.typeIsTcp && self.setNoDelay {
             try (server.socket as! TCP).setNoDelay(true)
         }
         
-        try server.listen(backlog) { result in
+        try server.listen(backlog) { [unowned self] result in
             if case .Success(let queue) = result {
                 self.onConnection(queue)
             }
@@ -109,20 +110,21 @@ public struct HTTPServer {
         Loop.defaultLoop.run()
     }
     
-    private mutating func onConnection(_ queue: Pipe?) {
+    private func onConnection(_ queue: Pipe?) {
         // TODO need to fix more ARC friendly
         let client = HTTPStream(stream: TCP())
+        self.clientsConnected += 1
         
-        //self.establishedClients.append(client)
+        let unmanaged = Unmanaged.passRetained(client)
+        
+        client.stream.onClose { [unowned self] in
+            self.clientsConnected -= 1
+            unmanaged.release()
+        }
         
         do {
             // accept connection
             try server.accept(client.stream, queue: queue)
-            
-            // keep alive
-            if self.shouldKeepAlive {
-                try client.setKeepAlive(self.keepAliveTimeout)
-            }
         }  catch {
             do {
                 try client.close()
@@ -139,11 +141,18 @@ public struct HTTPServer {
         
         let parser = RequestParser()
         
-        client.receive { result in
+        client.receive { [unowned self, unowned client] result in
             do {
                 let data = try result()
                 if let request = try parser.parse(data) {
                     self.userOnConnection { return (request, client) }
+                }
+            } catch HTTPStream.Error.EOF {
+                do {
+                    try client.close()
+                    self.userOnConnection { throw HTTPStream.Error.EOF }
+                } catch {
+                    self.userOnConnection { throw error }
                 }
             } catch {
                 if !self.shouldKeepAlive {
@@ -163,7 +172,7 @@ public struct HTTPServer {
     }
     
     // sending handles over a pipe
-    private mutating func sendHandleToWorker(_ client: HTTPStream){
+    private func sendHandleToWorker(_ client: HTTPStream){
         let worker = Cluster.workers[self.roundRobinCounter]
         
         // send stream to worker with ipc

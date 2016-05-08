@@ -11,6 +11,10 @@ import CLibUv
 
 public final class HTTPStream: AsyncStream {
     
+    public enum Error: ErrorProtocol {
+        case EOF
+    }
+    
     public var closed: Bool {
         return stream.isClosing()
     }
@@ -45,7 +49,7 @@ public final class HTTPStream: AsyncStream {
                 result { throw error }
             }
             else {
-                result { throw SuvError.UVError(code: UV_EOF.rawValue) }
+                result { throw Error.EOF }
             }
         }
     }
