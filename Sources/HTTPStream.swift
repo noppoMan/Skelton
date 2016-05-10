@@ -30,7 +30,7 @@ public final class HTTPStream: AsyncStream {
         try stream.setKeepAlive(true, delay: delay)
     }
     
-    public func send(_ data: Data, timingOut deadline: Double = .never, completion result: (Void throws -> Void) -> Void = { _ in}) {
+    public func send(_ data: Data, timingOut deadline: Double = .never, completion result: ((Void) throws -> Void) -> Void = { _ in}) {
         stream.write(buffer: data.bufferd) { res in
             result {
                 if case .Error(let error) = res {
@@ -65,7 +65,7 @@ public final class HTTPStream: AsyncStream {
         stream.close()
     }
     
-    public func flush(timingOut deadline: Double, completion result: (Void throws -> Void) -> Void = {_ in }) {
+    public func flush(timingOut deadline: Double, completion result: ((Void) throws -> Void) -> Void = {_ in }) {
         // noop
     }
 }
