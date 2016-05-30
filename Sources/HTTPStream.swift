@@ -40,7 +40,7 @@ public final class HTTPStream: AsyncStream {
         }
     }
     
-    public func receive(upTo byteCount: Int = 2048 /* ignored */, timingOut deadline: Double = .never, completion result: (Void throws -> Data) -> Void) {
+    public func receive(upTo byteCount: Int = 2048 /* ignored */, timingOut deadline: Double = .never, completion result: ((Void) throws -> Data) -> Void) {
         stream.read { res in
             if case .Data(let buf) = res {
                 result { buf.data }
