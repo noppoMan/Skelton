@@ -1,4 +1,5 @@
 import Suv
+import Time
 
 func observeWorker(_ worker: inout Worker){
     worker.send(.Message("message from master"))
@@ -26,27 +27,27 @@ if Cluster.isMaster {
         observeWorker(&worker)
     }
 
-    var server = HTTPServer()
-    try! server.bind(Address(host: "0.0.0.0", port: 8888))
+    var server = Skelton()
+    try! server.bind(host: "0.0.0.0", port: 8888)
     try! server.listen()
 
 } else {
-    var server = HTTPServer(ipcEnable: true) {
+    var server = Skelton(ipcEnable: true) {
         do {
             let (request, stream) = try $0()
-            var res = Response(headers: ["data": Header(Time.rfc1123)])
+            var res = Response(headers: ["Date": Time().rfc1123])
 
             if request.isKeepAlive {
-                res.headers["connection"] = Header("Keep-Alive")
+                res.headers["Connection"] = "Keep-Alive"
             } else {
-                res.headers["connection"] = Header("Close")
+                res.headers["Connection"] = "Close"
             }
 
             let content = "Hello! I'm a \(Process.pid)"
 
             if request.isChunkEncoded {
                 stream.send(res.description.data) // Write Head
-                stream.send(Response.chunkedEncode(string: content)) // send body
+                stream.send(chunk: content.data) // send body
                 stream.end() // end stream
             } else {
                 res.contentLength = content.characters.count
@@ -55,8 +56,6 @@ if Cluster.isMaster {
 
             if !res.isKeepAlive {
                 try! stream.close()
-            } else {
-                stream.unref()
             }
         } catch {
             print(error)

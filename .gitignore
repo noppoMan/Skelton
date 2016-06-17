@@ -2,3 +2,4 @@ Packages
 .build
 Xcode
 Sources/main.swift
+*.xcodeproj

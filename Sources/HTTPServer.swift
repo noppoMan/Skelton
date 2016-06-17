@@ -12,12 +12,6 @@
     import Darwin.C
 #endif
 
-@_exported import Suv
-@_exported import S4
-@_exported import C7
-@_exported import HTTP
-@_exported import HTTPParser
-
 /**
  Result enum for on HTTP Connection
  
@@ -26,7 +20,7 @@
  */
 public typealias HTTPConnectionResult = (() throws -> (Request, HTTPStream)) -> ()
 
-public final class HTTPServer {
+public final class Skelton {
     
     /**
      Event loop
@@ -86,51 +80,56 @@ public final class HTTPServer {
      - parameter addr: Bind Address
      - throws: SuvError.UVError
      */
-    public func bind(_ addr: Address) throws {
-        try server.bind(addr)
+    public func bind(host: String = "0.0.0.0", port: Int) throws {
+        try server.bind(URI(host: host, port: port))
     }
     
     /**
      Listen HTTP Server
      */
     public func listen() throws {
-        if server.socket.typeIsTcp && self.setNoDelay {
-            try (server.socket as! TCP).setNoDelay(true)
+        if let socket = server.socket where self.setNoDelay {
+            try socket.setNoDelay(true)
         }
         
-        try server.listen(backlog) { [unowned self] result in
-            if case .Success(let queue) = result {
-                self.onConnection(queue)
-            }
-            else if case .Error(let err) = result {
-                self.userOnConnection { throw err }
+        try server.listen(backlog) { [unowned self] getQueue in
+            do {
+                self.onConnection(try getQueue())
+            } catch {
+                self.userOnConnection {
+                    throw error
+                }
             }
         }
         
         Loop.defaultLoop.run()
     }
     
-    private func onConnection(_ queue: Pipe?) {
+    private func onConnection(_ queue: PipeSocket?) {
         // TODO need to fix more ARC friendly
-        let client = HTTPStream(stream: TCP())
+        let client = HTTPStream()
         self.clientsConnected += 1
         
         let unmanaged = Unmanaged.passRetained(client)
         
-        client.stream.onClose { [unowned self] in
+        client.onClose { [unowned self] in
             self.clientsConnected -= 1
             unmanaged.release()
         }
         
         do {
             // accept connection
-            try server.accept(client.stream, queue: queue)
+            try server.accept(client, queue: queue)
         }  catch {
             do {
                 try client.close()
-                self.userOnConnection { throw error }
+                self.userOnConnection {
+                    throw error
+                }
             } catch {
-                self.userOnConnection { throw error }
+                self.userOnConnection {
+                    throw error
+                }
             }
         }
         
@@ -141,26 +140,36 @@ public final class HTTPServer {
         
         let parser = RequestParser()
         
-        client.receive { [unowned self, unowned client] result in
+        client.receive { [unowned self] getData in
             do {
-                let data = try result()
+                let data = try getData()
                 if let request = try parser.parse(data) {
-                    self.userOnConnection { return (request, client) }
+                    self.userOnConnection {
+                        (request, client)
+                    }
                 }
-            } catch HTTPStream.Error.EOF {
+            } catch SwiftyLibuv.Error.eof {
                 do {
                     try client.close()
-                    self.userOnConnection { throw HTTPStream.Error.EOF }
+                    self.userOnConnection {
+                        throw ClosableError.alreadyClosed
+                    }
                 } catch {
-                    self.userOnConnection { throw error }
+                    self.userOnConnection {
+                        throw error
+                    }
                 }
             } catch {
                 if !self.shouldKeepAlive {
                     do {
                         try client.close()
-                        self.userOnConnection { throw error }
+                        self.userOnConnection {
+                            throw error
+                        }
                     } catch {
-                        self.userOnConnection { throw error }
+                        self.userOnConnection {
+                            throw error
+                        }
                     }
                 }
             }
@@ -176,8 +185,8 @@ public final class HTTPServer {
         let worker = Cluster.workers[self.roundRobinCounter]
         
         // send stream to worker with ipc
-        client.stream.write2(ipcPipe: worker.ipcPipe!)
-        client.stream.close()
+        client.send(queue: worker.ipcChan!)
+        do { try client.close() } catch {}
         
         roundRobinCounter = (roundRobinCounter + 1) % Cluster.workers.count
     }
@@ -185,7 +194,7 @@ public final class HTTPServer {
     /**
      Close server handle
      */
-    public func close(){
-        self.server.close()
+    public func close() throws {
+        try server.close()
     }
 }
