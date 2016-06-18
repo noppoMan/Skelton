@@ -10,17 +10,17 @@ Super easy!
 ```swift
 import Skelton
 
-let server = HTTPServer { result in
-    let (request, stream) = try! $0()
+let server = Skelton { getLoad in
+    let (request, stream) = try! getLoad()
     var res = Response(headers: [
-      "data": Header(Time.rfc1123)
+      "Date": Time.rfc1123
     ])
 
     stream.send("\(res.description)\r\nHello!".data)
     try! stream.close()
 }
 
-try! server.bind(Address(host: "127.0.0.1", port: 8888))
+try! server.bind(host: "127.0.0.1", port: 8888)
 try! server.listen()
 ```
 
@@ -40,24 +40,24 @@ Here is Example that respond large data with less memory.
 ```swift
 import Skelton
 
-var server = HTTPServer() {
+var server = Skelton() {
     do {
         let (request, stream) = try $0()
         var res = Response(headers: [
-          "data": Header(Time.rfc1123),
-          "transfer-encoding": HeaderValues("Chunked"),
-          "connection": Header("Keep-Alive")
+          "Date": Time.rfc1123,
+          "Transfer-encoding": "Chunked",
+          "Connection": "Keep-Alive"
         ])
 
         stream.send(res.description.data) // Write Head
-        stream.send(Response.chunkedEncode(string: "aaaa")) // Write body
+        stream.send(chunk: "aaaa".data) // Write body
         stream.end() // Write end
     } catch {
         print(error)
     }
 }
 
-try! server.bind(Address(host: "127.0.0.1", port: 3000))
+try! server.bind(host: "127.0.0.1", port: 3000)
 try! server.listen()
 ```
 
@@ -102,7 +102,7 @@ import PackageDescription
 let package = Package(
     name: "MyApp",
     dependencies: [
-        .Package(url: "https://github.com/noppoMan/Skelton.git", majorVersion: 0, minor: 4),
+        .Package(url: "https://github.com/noppoMan/Skelton.git", majorVersion: 0, minor: 7),
     ]
  )
 ```
