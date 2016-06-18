@@ -2,18 +2,18 @@ import Suv
 import Time
 
 func observeWorker(_ worker: inout Worker){
-    worker.send(.Message("message from master"))
+    worker.send(.message("message from master"))
 
     worker.on { event in
-        if case .Message(let str) = event {
+        if case .message(let str) = event {
             print(str)
         }
 
-        else if case .Online = event {
+        else if case .online = event {
             print("Worker: \(worker.id) is online")
         }
 
-        else if case .Exit(let status) = event {
+        else if case .exit(let status) = event {
             print("Worker: \(worker.id) is dead. status: \(status)")
             worker = try! Cluster.fork(silent: false)
             observeWorker(&worker)
@@ -54,9 +54,9 @@ if Cluster.isMaster {
                 stream.send("\(res.description)\(CRLF)\(content)".data)
             }
 
-            if !res.isKeepAlive {
+            //if !res.isKeepAlive {
                 try! stream.close()
-            }
+            //}
         } catch {
             print(error)
         }
