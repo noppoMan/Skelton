@@ -64,7 +64,11 @@ public final class Skelton {
     private let server: TCPServer
     
     // Current connected clients count.
-    public var clientsConnected: Int = 0
+    public var clientsConnected: Int {
+        return socketsConnected.count
+    }
+    
+    private var socketsConnected = [HTTPStream]()
     
     /**
      - parameter loop: Event loop
@@ -111,16 +115,31 @@ public final class Skelton {
         Loop.defaultLoop.run()
     }
     
+    public func closeClientsConnected() throws {
+        for client in socketsConnected {
+            try client.close()
+        }
+    }
+    
+    /**
+     Close server handle
+     */
+    public func close() throws {
+        try server.close()
+    }
+    
     private func onConnection(_ queue: PipeSocket?) {
         // TODO need to fix more ARC friendly
         let client = HTTPStream()
-        self.clientsConnected += 1
+        socketsConnected.append(client)
         
         let unmanaged = Unmanaged.passRetained(client)
         
-        client.onClose { [unowned self] in
-            self.clientsConnected -= 1
+        client.onClose { [unowned self, unowned client] in
             unmanaged.release()
+            if let index = self.socketsConnected.index(of: client) {
+                self.socketsConnected.remove(at: index)
+            }
         }
         
         do {
@@ -146,7 +165,7 @@ public final class Skelton {
         
         let parser = RequestParser()
         
-        client.receive { [unowned self] getData in
+        client.receive { [unowned self, unowned client] getData in
             do {
                 let data = try getData()
                 if let request = try parser.parse(data) {
@@ -195,13 +214,6 @@ public final class Skelton {
         do { try client.close() } catch {}
         
         roundRobinCounter = (roundRobinCounter + 1) % Cluster.workers.count
-    }
-    
-    /**
-     Close server handle
-     */
-    public func close() throws {
-        try server.close()
     }
 }
 

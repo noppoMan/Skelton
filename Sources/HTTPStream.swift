@@ -25,3 +25,10 @@ extension HTTPStream {
         self.send(chunk, timingOut: deadline, completion: completion)
     }
 }
+
+extension HTTPStream: Equatable {}
+
+public func ==(lhs: HTTPStream, rhs: HTTPStream) -> Bool {
+    return ObjectIdentifier(lhs) == ObjectIdentifier(rhs)
+}
+
