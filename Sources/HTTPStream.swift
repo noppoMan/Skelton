@@ -15,7 +15,7 @@ extension HTTPStream {
         self.send(Data("\(0)\(CRLF)\(CRLF)"))
     }
     
-    public func send(chunk data: Data, timingOut deadline: Double = .never, completion: ((Void) throws -> Void) -> Void = { _ in }) {
+    public func send(chunk data: Data, timingOut deadline: Double = .never, completion: @escaping ((Void) throws -> Void) -> Void = { _ in }) {
         var chunk: Data = ""
         chunk += String(data.bytes.count, radix: 16)
         chunk += CRLF
