@@ -102,7 +102,7 @@ import PackageDescription
 let package = Package(
     name: "MyApp",
     dependencies: [
-        .Package(url: "https://github.com/noppoMan/Skelton.git", majorVersion: 0, minor: 7),
+        .Package(url: "https://github.com/noppoMan/Skelton.git", majorVersion: 0, minor: 8),
     ]
  )
 ```

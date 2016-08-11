@@ -1,10 +1,10 @@
 import Suv
 import Time
 
-func observeWorker(_ worker: inout Worker){
+func observeWorker(_ worker: Worker){
     worker.send(.message("message from master"))
 
-    worker.on { event in
+    worker.onIPC { event in
         if case .message(let str) = event {
             print(str)
         }
@@ -15,16 +15,16 @@ func observeWorker(_ worker: inout Worker){
 
         else if case .exit(let status) = event {
             print("Worker: \(worker.id) is dead. status: \(status)")
-            worker = try! Cluster.fork(silent: false)
-            observeWorker(&worker)
+            let worker = try! Cluster.fork(silent: false)
+            observeWorker(worker)
         }
     }
 }
 
 if Cluster.isMaster {
-    for _ in 0..<OS.cpuCount {
+    for _ in 0..<OS.cpus().count {
         var worker = try! Cluster.fork(silent: false)
-        observeWorker(&worker)
+        observeWorker(worker)
     }
 
     var server = Skelton()
@@ -37,13 +37,11 @@ if Cluster.isMaster {
             let (request, stream) = try $0()
             var res = Response(headers: ["Date": Time().rfc1123])
 
-            if request.isKeepAlive {
-                res.headers["Connection"] = "Keep-Alive"
-            } else {
+            if !request.isKeepAlive {
                 res.headers["Connection"] = "Close"
             }
 
-            let content = "Hello! I'm a \(Process.pid)"
+            let content = "Hello! I'm a \(CommandLine.pid)"
 
             if request.isChunkEncoded {
                 stream.send(res.description.data) // Write Head
@@ -62,6 +60,6 @@ if Cluster.isMaster {
         }
     }
 
-    print("listening: \(Process.pid)")
+    print("listening: \(CommandLine.pid)")
     try! server.listen()
 }
