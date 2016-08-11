@@ -68,7 +68,7 @@ public final class Skelton {
         return socketsConnected.count
     }
     
-    private var socketsConnected = [HTTPStream]()
+    public var socketsConnected = [HTTPStream]()
     
     /**
      - parameter loop: Event loop
@@ -98,7 +98,7 @@ public final class Skelton {
      Listen HTTP Server
      */
     public func listen() throws {
-        if let socket = server.socket where self.setNoDelay {
+        if let socket = server.socket , self.setNoDelay {
             try socket.setNoDelay(true)
         }
         
@@ -163,7 +163,7 @@ public final class Skelton {
             return sendHandleToWorker(client)
         }
         
-        let parser = RequestParser()
+        let parser = HTTPParser.RequestParser()
         
         client.receive { [unowned self, unowned client] getData in
             do {
@@ -173,7 +173,7 @@ public final class Skelton {
                         (request, client)
                     }
                 }
-            } catch SwiftyLibuv.Error.eof {
+            } catch StreamWrap.StreamWrapError.eof {
                 do {
                     try client.close()
                     self.userOnConnection {
