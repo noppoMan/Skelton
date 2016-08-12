@@ -173,7 +173,7 @@ public final class Skelton {
                         (request, client)
                     }
                 }
-            } catch StreamWrap.StreamWrapError.eof {
+            } catch StreamWrapError.eof {
                 do {
                     try client.close()
                     self.userOnConnection {
