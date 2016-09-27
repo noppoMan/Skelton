@@ -88,7 +88,7 @@ let response = Response(status: .created)
 
 
 ### Working With Cluster
-See the [Sources/Performance/main.swift](https://github.com/slimane-swift/Skelton/blob/master/Sources/Performance/main.swift)
+See the [Sources/SkeltonPerformance/main.swift](https://github.com/slimane-swift/Skelton/blob/master/Sources/SkeltonPerformance/main.swift)
 
 ## Package.swift
 

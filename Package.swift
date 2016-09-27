@@ -3,7 +3,7 @@ import PackageDescription
 let package = Package(
     name: "Skelton",
     targets: [
-        Target(name: "Performance", dependencies: ["Skelton"]),
+        Target(name: "SkeltonPerformance", dependencies: ["Skelton"]),
         Target(name: "Skelton")
     ],
     dependencies: [
