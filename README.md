@@ -1,5 +1,5 @@
 # Skelton
-An asynchronous http server for Swift that adopts open-swift
+An asynchronous http server for Swift
 
 This is Web Server Layer for [Slimane](https://github.com/slimane-swift/slimane.git)
 
@@ -12,12 +12,12 @@ import Skelton
 
 let server = Skelton { getLoad in
     let (request, stream) = try! getLoad()
-    var res = Response(headers: [
-      "Date": Time.rfc1123
-    ])
 
-    stream.send("\(res.description)\r\nHello!".data)
-    try! stream.close()
+    let response = Response(data: "\(response.description)\r\nHello!".data)
+
+    ResponseSerializer(stream: stream).serialize(response) { _ in
+        stream.close()
+    }
 }
 
 try! server.bind(host: "127.0.0.1", port: 8888)
@@ -28,9 +28,9 @@ try! server.listen()
 ## Documention
 
 ### Request, Response
-https://github.com/open-swift/S4
+https://github.com/slimane-swift/HTTPCore
 
-We are using S4.Request and S4.Response
+We are using HTTPCore.Request and HTTPCore.Response
 
 ### Streaming
 
@@ -43,21 +43,22 @@ import Skelton
 var server = Skelton() {
     do {
         let (request, stream) = try $0()
-        var res = Response(headers: [
-          "Date": Time.rfc1123,
-          "Transfer-encoding": "Chunked",
-          "Connection": "Keep-Alive"
-        ])
 
-        stream.send(res.description.data) // Write Head
-        stream.send(chunk: "aaaa".data) // Write body
-        stream.end() // Write end
+        let bodyStream: (WritableStream, @escaping ((Void) throws -> Void) -> Void) -> Void = { stream, completion in
+            stream.write("aaaa".data) // this is stream writer for chunk
+            completion {
+                stream.close()
+            }
+        }
+
+        ResponseSerializer(stream: stream).serialize(Response(body: bodyStream))
+
     } catch {
         print(error)
     }
 }
 
-try! server.bind(host: "127.0.0.1", port: 3000)
+try! server.bind(host: "127.0.0.1", port: 8888)
 try! server.listen()
 ```
 
@@ -87,12 +88,7 @@ let response = Response(status: .created)
 
 
 ### Working With Cluster
-See the [Examples/HTTPServerCluster.swift](https://github.com/slimane-swift/Skelton/blob/master/Examples/HTTPServerCluster.swift)
-
-## More!
-Skelton adpots [open-swift](https://github.com/open-swift)
-
-For more detail, plz visit [Docs for open-swift](https://github.com/open-swift/docs)
+See the [Sources/Performance/main.swift](https://github.com/slimane-swift/Skelton/blob/master/Sources/Performance/main.swift)
 
 ## Package.swift
 

@@ -13,10 +13,7 @@
 #endif
 
 @_exported import Suv
-@_exported import S4
-@_exported import C7
-@_exported import HTTP
-@_exported import HTTPParser
+@_exported import HTTPCore
 
 /**
  Result enum for on HTTP Connection
@@ -24,7 +21,7 @@
  - Success: For getting request and response objects
  - Error: For getting Error
  */
-public typealias HTTPConnectionResult = (() throws -> (Request, HTTPStream)) -> ()
+public typealias HTTPConnection = (() throws -> (Request, Stream)) -> ()
 
 public final class Skelton {
     
@@ -59,7 +56,7 @@ public final class Skelton {
     
     private var roundRobinCounter = 0
     
-    private let userOnConnection: HTTPConnectionResult
+    private let userOnConnection: HTTPConnection
     
     private let server: TCPServer
     
@@ -68,14 +65,14 @@ public final class Skelton {
         return socketsConnected.count
     }
     
-    public var socketsConnected = [HTTPStream]()
+    public var socketsConnected = [TCPSocket]()
     
     /**
      - parameter loop: Event loop
      - parameter ipcEnable: if true TCP is initilized as ipcMode and it can't bind, false it is initialized as basic TCP handle instance
      - parameter onConnection: Connection handler
      */
-    public init(loop: Loop = Loop.defaultLoop, ipcEnable: Bool = false, onConnection: HTTPConnectionResult = {_ in}) {
+    public init(loop: Loop = Loop.defaultLoop, ipcEnable: Bool = false, onConnection: @escaping HTTPConnection = {_ in}) {
         self.loop = loop
         self.userOnConnection = onConnection
         self.server = TCPServer(loop: loop, ipcEnable: ipcEnable)
@@ -91,7 +88,7 @@ public final class Skelton {
      - throws: SuvError.UVError
      */
     public func bind(host: String = "0.0.0.0", port: Int) throws {
-        try server.bind(URI(host: host, port: port))
+        try server.bind(URL(string: "http://\(host):\(port)")!)
     }
     
     /**
@@ -115,22 +112,21 @@ public final class Skelton {
         Loop.defaultLoop.run()
     }
     
-    public func closeClientsConnected() throws {
+    public func closeClientsConnected() {
         for client in socketsConnected {
-            try client.close()
+            client.close()
         }
     }
     
     /**
      Close server handle
      */
-    public func close() throws {
-        try server.close()
+    public func close() {
+        server.close()
     }
     
     private func onConnection(_ queue: PipeSocket?) {
-        // TODO need to fix more ARC friendly
-        let client = HTTPStream()
+        let client = TCPSocket()
         socketsConnected.append(client)
         
         let unmanaged = Unmanaged.passRetained(client)
@@ -146,15 +142,9 @@ public final class Skelton {
             // accept connection
             try server.accept(client, queue: queue)
         }  catch {
-            do {
-                try client.close()
-                self.userOnConnection {
-                    throw error
-                }
-            } catch {
-                self.userOnConnection {
-                    throw error
-                }
+            client.close()
+            self.userOnConnection {
+                throw error
             }
         }
         
@@ -163,9 +153,9 @@ public final class Skelton {
             return sendHandleToWorker(client)
         }
         
-        let parser = HTTPParser.RequestParser()
+        let parser = RequestParser()
         
-        client.receive { [unowned self, unowned client] getData in
+        client.read { [unowned self, unowned client] getData in
             do {
                 let data = try getData()
                 if let request = try parser.parse(data) {
@@ -174,27 +164,15 @@ public final class Skelton {
                     }
                 }
             } catch StreamWrapError.eof {
-                do {
-                    try client.close()
-                    self.userOnConnection {
-                        throw ClosableError.alreadyClosed
-                    }
-                } catch {
-                    self.userOnConnection {
-                        throw error
-                    }
+                client.close()
+                self.userOnConnection {
+                    throw StreamError.closedStream(data: [])
                 }
             } catch {
                 if !self.shouldKeepAlive {
-                    do {
-                        try client.close()
-                        self.userOnConnection {
-                            throw error
-                        }
-                    } catch {
-                        self.userOnConnection {
-                            throw error
-                        }
+                    client.close()
+                    self.userOnConnection {
+                        throw error
                     }
                 }
             }
@@ -206,12 +184,12 @@ public final class Skelton {
     }
     
     // sending handles over a pipe
-    private func sendHandleToWorker(_ client: HTTPStream){
+    private func sendHandleToWorker(_ client: TCPSocket){
         let worker = Cluster.workers[self.roundRobinCounter]
         
         // send stream to worker with ipc
-        client.send(queue: worker.ipcChan!)
-        do { try client.close() } catch {}
+        client.write(queue: worker.ipcChan!)
+        client.close()
         
         roundRobinCounter = (roundRobinCounter + 1) % Cluster.workers.count
     }

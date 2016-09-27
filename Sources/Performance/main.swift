@@ -1,5 +1,4 @@
-import Suv
-import Time
+import Skelton
 
 func observeWorker(_ worker: Worker){
     worker.send(.message("message from master"))
@@ -35,26 +34,17 @@ if Cluster.isMaster {
     var server = Skelton(ipcEnable: true) {
         do {
             let (request, stream) = try $0()
-            var res = Response(headers: ["Date": Time().rfc1123])
+
+            var response = Response(body: "Hello! I'm a \(CommandLine.pid)".data)
 
             if !request.isKeepAlive {
-                res.headers["Connection"] = "Close"
+                response.headers["Connection"] = "Close"
             }
 
-            let content = "Hello! I'm a \(CommandLine.pid)"
-
-            if request.isChunkEncoded {
-                stream.send(res.description.data) // Write Head
-                stream.send(chunk: content.data) // send body
-                stream.end() // end stream
-            } else {
-                res.contentLength = content.characters.count
-                stream.send("\(res.description)\(CRLF)\(content)".data)
+            ResponseSerializer(stream: stream).serialize(response)
+            if !response.isKeepAlive {
+                stream.close()
             }
-
-            //if !res.isKeepAlive {
-                try! stream.close()
-            //}
         } catch {
             print(error)
         }
