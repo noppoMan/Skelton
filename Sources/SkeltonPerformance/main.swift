@@ -1,9 +1,10 @@
 import Skelton
+import Foundation
 
 func observeWorker(_ worker: Worker){
     worker.send(.message("message from master"))
 
-    worker.onIPC { event in
+    worker.onEvent { event in
         if case .message(let str) = event {
             print(str)
         }
@@ -21,35 +22,30 @@ func observeWorker(_ worker: Worker){
 }
 
 if Cluster.isMaster {
-    for _ in 0..<OS.cpus().count {
+    for _ in 0..<ProcessInfo.cpus().count {
         var worker = try! Cluster.fork(silent: false)
         observeWorker(worker)
     }
 
-    var server = Skelton()
+    let server = Skelton()
     try! server.bind(host: "0.0.0.0", port: 8888)
     try! server.listen()
 
 } else {
-    var server = Skelton(ipcEnable: true) {
-        do {
-            let (request, stream) = try $0()
-
-            var response = Response(body: "Hello! I'm a \(CommandLine.pid)".data)
-
-            if !request.isKeepAlive {
-                response.headers["Connection"] = "Close"
-            }
-
-            ResponseSerializer(stream: stream).serialize(response)
-            if !response.isKeepAlive {
+    
+    let server = Skelton() { result in
+        switch result {
+        case .onRequest(let request, let stream):
+            ResponseSerializer(stream: stream).serialize(Response(body: "Welecom to Slimane!".data)) { _ in
                 stream.close()
             }
-        } catch {
+        case .onError(let error):
             print(error)
+        default:
+            break
         }
     }
 
-    print("listening: \(CommandLine.pid)")
+    print("listening: \(Process.pid)")
     try! server.listen()
 }

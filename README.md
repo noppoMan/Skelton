@@ -10,13 +10,16 @@ Super easy!
 ```swift
 import Skelton
 
-let server = Skelton { getLoad in
-    let (request, stream) = try! getLoad()
-
-    let response = Response(data: "\(response.description)\r\nHello!".data)
-
-    ResponseSerializer(stream: stream).serialize(response) { _ in
-        stream.close()
+let server = Skelton() { result in
+    switch result {
+    case .onRequest(let request, let stream):
+        ResponseSerializer(stream: stream).serialize(Response(body: "Hello!".data)) { _ in
+            stream.close()
+        }
+    case .onError(let error):
+        print(error)
+    default:
+        break
     }
 }
 
@@ -40,10 +43,9 @@ Here is Example that respond large data with less memory.
 ```swift
 import Skelton
 
-var server = Skelton() {
-    do {
-        let (request, stream) = try $0()
-
+let server = Skelton() { result in
+    switch result {
+    case .onRequest(let request, let stream):
         let bodyStream: (WritableStream, @escaping ((Void) throws -> Void) -> Void) -> Void = { stream, completion in
             stream.write("aaaa".data) // this is stream writer for chunk
             completion {
@@ -52,9 +54,10 @@ var server = Skelton() {
         }
 
         ResponseSerializer(stream: stream).serialize(Response(body: bodyStream))
-
-    } catch {
+    case .onError(let error):
         print(error)
+    default:
+        break
     }
 }
 
@@ -73,17 +76,7 @@ server.keepAliveTimout = 120 // 2 min
 ### Nodelay(Nagle’s algorithm.)
 
 ```swift
-let server = HTTPServer(...)
-
 server.setNoDelay = true // Enable to use Nagle’s algorithm.
-
-server.listen()
-```
-
-### HTTP Status
-
-```swift
-let response = Response(status: .created)
 ```
 
 
